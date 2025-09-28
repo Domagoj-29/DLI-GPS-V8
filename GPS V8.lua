@@ -272,7 +272,7 @@ function onDraw()
 
 		screen.setColor(15,15,15)
 		screen.drawRectF(0,0,32,2)
-		screen.drawRectF(0,h-9,32,8)
+		screen.drawRectF(0,h-9,32,9)
 	end
 	screen.setColor(0,0,0)
 	screen.drawText(w-23,h-6,"D")
@@ -315,3 +315,4 @@ function drawCompassOverlay(compassDegrees,shadingOffset,enabled)
 	end
 
 end
+
