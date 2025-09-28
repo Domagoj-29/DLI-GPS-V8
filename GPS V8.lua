@@ -252,7 +252,7 @@ function onDraw()
 		screen.drawTextBox(h/2-7,16+scrollY,15,5,string.format("%.0f",compassDegrees),0)
 		screen.drawCircle((h/2-7)+round((15-digitCount*5)/2)+(digitCount*5+1),16+scrollY,1)-- Formula for textBox center alignment, alignedX=textBoxX+(textBoxWidth-textWidth)/2
 		if waypointSet then
-			screen.drawTextBox(h/2-14,23+scrollY,30,5,string.format("%.".. 3-string.len(math.floor(distance)) .."f",distance).."km",0) -- Depending on digit count the number will more or less decimal places
+			screen.drawTextBox(h/2-14,23+scrollY,30,5,string.format("%.".. 3-string.len(math.floor(distance)) .."f",distance).."km",0) -- Depending on digit count the number will have more or less decimal places
 			if speed>speedThreshold then
 				screen.drawTextBox(h/2-9,30+scrollY,20,5,string.format("%.0f",estimate).."m",0)
 			end
@@ -313,4 +313,5 @@ function drawCompassOverlay(compassDegrees,shadingOffset,enabled)
 			screen.drawText(w/2+1+shadingOffset,2,"W")
 		end
 	end
+
 end
