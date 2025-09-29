@@ -173,7 +173,6 @@ function onTick()
 		distance,estimate=waypointDistance(gpsX,gpsY,waypointX,waypointY,speed)
 		if h<35 and not (waypointX==0 and waypointY==0) then
 			scrollY=scrollUpDown(Down and not dataMode,Up and not dataMode,1,-21,0,waypointSetPulse(waypointX~=0 and waypointY~=0))
-			output.setNumber(1,scrollY)
 		else
 			scrollY=0
 		end
@@ -315,4 +314,5 @@ function drawCompassOverlay(compassDegrees,shadingOffset,enabled)
 	end
 
 end
+
 
