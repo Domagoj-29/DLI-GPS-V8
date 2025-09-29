@@ -238,7 +238,11 @@ function onDraw()
 		if pointerType then
 			drawTrianglePointer(pointerX,pointerY,compassDegrees)
 		else
-			screen.drawRectF(pointerX,pointerY,2,2)
+			if mapMovement=="GPS" then
+				screen.drawRectF(w/2-1,h/2-1,2,2)
+			else
+				screen.drawRectF(pointerX,pointerY,2,2)
+			end
 		end
 		if mapMovement=="Touchscreen" and mapMovementSquarePointer==true then
 			screen.drawRectF(w/2-1,h/2-1,2,2)
@@ -312,7 +316,4 @@ function drawCompassOverlay(compassDegrees,shadingOffset,enabled)
 			screen.drawText(w/2+1+shadingOffset,2,"W")
 		end
 	end
-
 end
-
-
