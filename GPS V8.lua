@@ -131,9 +131,6 @@ function onTick()
 	if not dataScreenToggle then
 		local Left=isPressed and isPointInRectangle(inputX,inputY,-1,-1,w/2-1,h+1)
 		local Right=isPressed and isPointInRectangle(inputX,inputY,w/2+1,-1,w+1,h+1)
-		if Left or Right or Up or Down then
-			mapMovement="Touchscreen"
-		end
 
 		zoomDecrease=isPressed and isPointInRectangle(inputX,inputY,w-7,h-8,8,9)
 		zoomIncrease=isPressed and isPointInRectangle(inputX,inputY,w-14,h-8,8,9)
@@ -141,9 +138,6 @@ function onTick()
 		zoom=zoomUpDown(zoomIncrease,zoomDecrease,0.03*zoomTimeMultiplier*zoomMultiplier,0.1,50,false)
 
 		resetMovement=isPressed and isPointInRectangle(inputX,inputY,w-20,h-8,7,9)
-		if resetMovement then
-			mapMovement="GPS"
-		end
 
 		local drawLine=isPressed and isPointInRectangle(inputX,inputY,w-32,h-8,7,9)
 		local drawLinePulse=false
@@ -155,8 +149,15 @@ function onTick()
 		end
 		drawLineToggle=drawLinePushToToggle(drawLine or linePulse(drawLinePulse))
 
-
 		local notAnyButton=not (dataMode or resetMovement or drawLine or zoomIncrease or zoomDecrease)
+
+		if (Left or Right or Up or Down) and notAnyButton then
+			mapMovement="Touchscreen"
+		end
+		if resetMovement then
+			mapMovement="GPS"
+		end
+
 		local movementMultiplierX=math.abs((w/2-inputX)*zoom*propertyMultiplierX)
 		local movementMultiplierY=math.abs((h/2-inputY)*zoom*propertyMultiplierY)
 
