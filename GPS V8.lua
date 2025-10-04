@@ -84,7 +84,6 @@ storeX=createMemoryGate()
 storeY=createMemoryGate()
 mapMovementPulse=createPulse()
 linePulse=createPulse()
-waypointSetPulse=createPulse()
 
 
 mapMovement="GPS" -- GPS/Touchscreen
@@ -171,8 +170,8 @@ function onTick()
 		screenWaypointX,screenWaypointY=map.mapToScreen(storedX,storedY,zoom,w,h,waypointX,waypointY)
 	else
 		distance,estimate=waypointDistance(gpsX,gpsY,waypointX,waypointY,speed)
-		if h<35 and not (waypointX==0 and waypointY==0) then
-			scrollY=scrollUpDown(Down and not dataMode,Up and not dataMode,1,-21,0,waypointSetPulse(waypointX~=0 and waypointY~=0))
+		if h<35 then
+			scrollY=scrollUpDown(Down and not dataMode,Up and not dataMode,1,-21,0,waypointX==0 and waypointY==0)
 		else
 			scrollY=0
 		end
