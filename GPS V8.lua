@@ -1,22 +1,117 @@
-function isPointInRectangle(x,y,rectX,rectY,rectW,rectH)
-	return x>rectX and y>rectY and x<rectX+rectW and y<rectY+rectH
-end
-function getHighlightColor(isSelected)
+-- Initializing variables
+
+local uiR=0
+local uiG=0
+local uiB=0
+
+local pointerR=0
+local pointerG=0
+local pointerB=0
+
+local lineR=0
+local lineG=0
+local lineB=0
+
+local speedThreshold=0
+
+local zoom=1
+
+local gpsX=0
+local gpsY=0
+local speed=0
+local compassDegrees=0
+local waypointX=0
+local waypointY=0
+
+local isOverlayEnabled=false
+local pointerType=false
+local mapMovementSquarePointer=false
+
+local dataScreenToggle=false
+
+local zoomDecrease=false
+local zoomIncrease=false
+local zoomTimeMultiplier=0
+
+local resetMovement=false
+local drawLineToggle=false
+
+local storedX=0
+local storedY=0
+
+local pointerX=0
+local pointerY=0
+
+local screenWaypointX=0
+local screenWaypointY=0
+
+local distance=0
+local estimate=0
+
+local scrollY
+
+local w=0
+local h=0
+
+-- onDraw functions
+
+local function getHighlightColor(isSelected)
 	if isSelected then
 		return 255,127,0
 	else
 		return uiR,uiG,uiB
 	end
 end
-function round(value)
+function rotatePoint(x,y,angle)
+	return x*math.cos(angle)-y*math.sin(angle),x*math.sin(angle)+y*math.cos(angle)
+end
+function drawTrianglePointer(x,y,heading)
+	local angle=math.rad(heading)
+	local tipX,tipY=rotatePoint(0,-5,angle)
+	local bottomLeftX,bottomLeftY=rotatePoint(-3,3,angle)
+	local bottomRightX,bottomRightY=rotatePoint(3,3,angle)
+	screen.drawTriangleF(x+tipX,y+tipY,x+bottomLeftX,y+bottomLeftY,x+bottomRightX,y+bottomRightY)
+end
+function drawCompassOverlay(compassDegrees,shadingOffset,enabled)
+	if enabled then
+		if compassDegrees>340 or compassDegrees<20 then
+			screen.drawText(w/2-2+shadingOffset,2,"N")
+		elseif compassDegrees<70 then
+			screen.drawText(w/2-5+shadingOffset,2,"N")
+			screen.drawText(w/2+1+shadingOffset,2,"E")
+		elseif compassDegrees<110 then
+			screen.drawText(w/2-2+shadingOffset,2,"E")
+		elseif compassDegrees<160 then
+			screen.drawText(w/2-5+shadingOffset,2,"S")
+			screen.drawText(w/2+1+shadingOffset,2,"E")
+		elseif compassDegrees<200 then
+			screen.drawText(w/2-2+shadingOffset,2,"S")
+		elseif compassDegrees<250 then
+			screen.drawText(w/2-5+shadingOffset,2,"S")
+			screen.drawText(w/2+1+shadingOffset,2,"W")
+		elseif compassDegrees<290 then
+			screen.drawText(w/2-2+shadingOffset,2,"W")
+		else
+			screen.drawText(w/2-5+shadingOffset,2,"N")
+			screen.drawText(w/2+1+shadingOffset,2,"W")
+		end
+	end
+end
+
+-- onTick functions
+
+local function isPointInRectangle(x,y,rectX,rectY,rectW,rectH)
+	return x>rectX and y>rectY and x<rectX+rectW and y<rectY+rectH
+end
+local function round(value)
 	value=math.floor(value+0.5)
 	return value
 end
-function clamp(value,min,max)
+local function clamp(value,min,max)
 	value=math.max(min,math.min(value,max))
 	return value
 end
-function createPulse()
+local function createPulse()
 	local k=0
 	return function(variable)
 		if not variable then
@@ -27,7 +122,7 @@ function createPulse()
 		return k==1
 	end
 end
-function createPushToToggle()
+local function createPushToToggle()
 	local oldVariable=false
 	local toggleVariable=false
 	return function(variable)
@@ -38,7 +133,7 @@ function createPushToToggle()
 		return toggleVariable
 	end
 end
-function createMemoryGate()
+local function createMemoryGate()
 	local storedValue=0
 	return function(valueToStore,set,reset,resetValue)
 		if set then
@@ -50,7 +145,7 @@ function createMemoryGate()
 		return storedValue
 	end
 end
-function createUpDown(startValue)
+local function createUpDown(startValue)
 	local counter=startValue
 	return function(down,up,increment,min,max,reset)
 		if down then
@@ -66,13 +161,14 @@ function createUpDown(startValue)
 		return counter
 	end
 end
-function waypointDistance(gpsX,gpsY,waypointX,waypointY,speed)
+local function waypointDistance(gpsX,gpsY,waypointX,waypointY,speed)
 	local differenceX=waypointX-gpsX
 	local differenceY=waypointY-gpsY
 	local distance=clamp(math.sqrt(differenceX*differenceX+differenceY*differenceY)/1000,0,256)
 	local estimate=clamp((distance/(speed*3.6))*60,0,999)
 	return distance,estimate
 end
+
 dataButtonPushToToggle=createPushToToggle()
 drawLinePushToToggle=createPushToToggle()
 zoomUpDown=createUpDown(1)
@@ -85,11 +181,7 @@ storeY=createMemoryGate()
 mapMovementPulse=createPulse()
 linePulse=createPulse()
 
-
-mapMovement="GPS" -- GPS/Touchscreen
-zoom=1
-w=0
-h=0
+local mapMovement="GPS" -- GPS/Touchscreen
 function onTick()
 	uiR=property.getNumber("UI R")
 	uiG=property.getNumber("UI G")
@@ -234,7 +326,7 @@ function onDraw()
 		screen.setColor(getHighlightColor(zoomDecrease))
 		screen.drawLine(w-5,h-4,w-1,h-4)
 
-		screen.setColor(uiR,uiG,uiB)
+		screen.setColor(pointerR,pointerG,pointerB)
 		if pointerType then
 			drawTrianglePointer(pointerX,pointerY,compassDegrees)
 		else
@@ -281,39 +373,4 @@ function onDraw()
 	screen.drawText(w-23,h-6,"D")
 	screen.setColor(getHighlightColor(dataScreenToggle))
 	screen.drawText(w-24,h-6,"D")
-end
-function rotatePoint(x,y,angle)
-	return x*math.cos(angle)-y*math.sin(angle),x*math.sin(angle)+y*math.cos(angle)
-end
-function drawTrianglePointer(x,y,heading)
-	local angle=math.rad(heading)
-	local tipX,tipY=rotatePoint(0,-5,angle)
-	local bottomLeftX,bottomLeftY=rotatePoint(-3,3,angle)
-	local bottomRightX,bottomRightY=rotatePoint(3,3,angle)
-	screen.drawTriangleF(x+tipX,y+tipY,x+bottomLeftX,y+bottomLeftY,x+bottomRightX,y+bottomRightY)
-end
-function drawCompassOverlay(compassDegrees,shadingOffset,enabled)
-	if enabled then
-		if compassDegrees>340 or compassDegrees<20 then
-			screen.drawText(w/2-2+shadingOffset,2,"N")
-		elseif compassDegrees<70 then
-			screen.drawText(w/2-5+shadingOffset,2,"N")
-			screen.drawText(w/2+1+shadingOffset,2,"E")
-		elseif compassDegrees<110 then
-			screen.drawText(w/2-2+shadingOffset,2,"E")
-		elseif compassDegrees<160 then
-			screen.drawText(w/2-5+shadingOffset,2,"S")
-			screen.drawText(w/2+1+shadingOffset,2,"E")
-		elseif compassDegrees<200 then
-			screen.drawText(w/2-2+shadingOffset,2,"S")
-		elseif compassDegrees<250 then
-			screen.drawText(w/2-5+shadingOffset,2,"S")
-			screen.drawText(w/2+1+shadingOffset,2,"W")
-		elseif compassDegrees<290 then
-			screen.drawText(w/2-2+shadingOffset,2,"W")
-		else
-			screen.drawText(w/2-5+shadingOffset,2,"N")
-			screen.drawText(w/2+1+shadingOffset,2,"W")
-		end
-	end
 end
