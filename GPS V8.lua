@@ -54,6 +54,8 @@ local estimate=0
 
 local scrollY
 
+local verticalGap=0
+
 local w=0
 local h=0
 
@@ -218,6 +220,8 @@ function onTick()
 
 	local isPressed=input.getBool(1)
 
+	verticalGap=clamp((h/32-1),0,2)*2
+
 	local Up=isPressed and isPointInRectangle(inputX,inputY,-1,-1,w+1,h/2-1)
 	local Down=isPressed and isPointInRectangle(inputX,inputY,-1,h/2+1,w+1,h/2-1)
 
@@ -347,28 +351,29 @@ function onDraw()
 		local digitCount=string.len(string.format("%.0f",compassDegrees))
 		screen.setColor(0,0,0)
 		screen.drawTextBox(w/2-17,2+scrollY,35,5,string.format("%.0f",gpsX),0)
-		screen.drawTextBox(w/2-17,9+scrollY,35,5,string.format("%.0f",gpsY),0)
-		screen.drawTextBox(h/2-7,16+scrollY,15,5,string.format("%.0f",compassDegrees),0)
-		screen.drawCircle((h/2-7)+round((15-digitCount*5)/2)+(digitCount*5+1),16+scrollY,1)-- Formula for textBox center alignment, alignedX=textBoxX+(textBoxWidth-textWidth)/2
+		screen.drawTextBox(w/2-17,9+scrollY+verticalGap,35,5,string.format("%.0f",gpsY),0)
+		screen.drawTextBox(h/2-7,16+scrollY+verticalGap*2,15,5,string.format("%.0f",compassDegrees),0)
+		screen.drawCircle((h/2-7)+round((15-digitCount*5)/2)+(digitCount*5+1),16+scrollY+verticalGap*2,1)-- Formula for textBox center alignment, alignedX=textBoxX+(textBoxWidth-textWidth)/2
 		if waypointSet then
-			screen.drawTextBox(h/2-14,23+scrollY,30,5,string.format("%.".. 3-string.len(math.floor(distance)) .."f",distance).."km",0) -- Depending on digit count the number will have more or less decimal places
+			screen.drawTextBox(h/2-14,23+scrollY+verticalGap*3,30,5,string.format("%.".. 3-string.len(math.floor(distance)) .."f",distance).."km",0) -- Depending on digit count the number will have more or less decimal places
 			if speed>speedThreshold then
-				screen.drawTextBox(h/2-9,30+scrollY,20,5,string.format("%.0f",estimate).."m",0)
+				screen.drawTextBox(h/2-9,30+scrollY+verticalGap*4,20,5,string.format("%.0f",estimate).."m",0)
 			end
 		end
 
 		screen.setColor(uiR,uiG,uiB)
 		screen.drawTextBox(w/2-18,2+scrollY,35,5,string.format("%.0f",gpsX),0)
-		screen.drawTextBox(w/2-18,9+scrollY,35,5,string.format("%.0f",gpsY),0)
-		screen.drawTextBox(h/2-8,16+scrollY,15,5,string.format("%.0f",compassDegrees),0)
-		screen.drawCircle((h/2-8)+round((15-digitCount*5)/2)+(digitCount*5+1),16+scrollY,1)
+		screen.drawTextBox(w/2-18,9+scrollY+verticalGap,35,5,string.format("%.0f",gpsY),0)
+		screen.drawTextBox(h/2-8,16+scrollY+verticalGap*2,15,5,string.format("%.0f",compassDegrees),0)
+		screen.drawCircle((h/2-8)+round((15-digitCount*5)/2)+(digitCount*5+1),16+scrollY+verticalGap*2,1)
 		if waypointSet then
-			screen.drawTextBox(h/2-15,23+scrollY,30,5,string.format("%.".. 3-string.len(math.floor(distance)) .."f",distance).."km",0)
+			screen.drawTextBox(h/2-15,23+scrollY+verticalGap*3,30,5,string.format("%.".. 3-string.len(math.floor(distance)) .."f",distance).."km",0)
 			if speed>speedThreshold then
-				screen.drawTextBox(h/2-10,30+scrollY,20,5,string.format("%.0f",estimate).."m",0)
+				screen.drawTextBox(h/2-10,30+scrollY+verticalGap*4,20,5,string.format("%.0f",estimate).."m",0)
 			end
 		end
 
+		-- Invisible rectangles
 		screen.setColor(15,15,15)
 		screen.drawRectF(0,0,32,2)
 		screen.drawRectF(0,h-9,32,9)
