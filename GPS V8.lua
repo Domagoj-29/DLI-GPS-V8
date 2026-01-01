@@ -2,70 +2,13 @@
 -- GitHub: https://github.com/Domagoj-29
 -- Workshop: https://steamcommunity.com/profiles/76561198935577915/myworkshopfiles/
 
--- Initializing variables
-
-local uiR=0
-local uiG=0
-local uiB=0
-
-local pointerR=0
-local pointerG=0
-local pointerB=0
-
-local lineR=0
-local lineG=0
-local lineB=0
-
-local speedThreshold=0
-
-local zoom=1
-
-local gpsX=0
-local gpsY=0
-local speed=0
-local compassDegrees=0
-local waypointX=0
-local waypointY=0
-
-local isOverlayEnabled=false
-local pointerType=false
-local mapMovementSquarePointer=false
-
-local dataScreenToggle=false
-
-local zoomDecrease=false
-local zoomIncrease=false
-local zoomTimeMultiplier=0
-
-local resetMovement=false
-local drawLineToggle=false
-
-local storedX=0
-local storedY=0
-
-local pointerX=0
-local pointerY=0
-
-local screenWaypointX=0
-local screenWaypointY=0
-
-local distance=0
-local estimate=0
-
-local scrollY
-
-local verticalGap=0
-
-local w=0
-local h=0
-
 -- onDraw functions
 
 local function getHighlightColor(isSelected)
 	if isSelected then
 		return 255,127,0
 	else
-		return uiR,uiG,uiB
+		return UiR,UiG,UiB
 	end
 end
 function rotatePoint(x,y,angle)
@@ -175,106 +118,108 @@ local function waypointDistance(gpsX,gpsY,waypointX,waypointY,speed)
 	return distance,estimate
 end
 
-dataButtonPushToToggle=createPushToToggle()
-drawLinePushToToggle=createPushToToggle()
-zoomUpDown=createUpDown(1)
-zoomTimeMultiplierUpDown=createUpDown(1)
-upDownMovement=createUpDown(0)
-leftRightMovement=createUpDown(0)
-scrollUpDown=createUpDown(0)
-storeX=createMemoryGate()
-storeY=createMemoryGate()
-mapMovementPulse=createPulse()
-linePulse=createPulse()
+local dataButtonPushToToggle=createPushToToggle()
+local drawLinePushToToggle=createPushToToggle()
+local zoomUpDown=createUpDown(1)
+local zoomTimeMultiplierUpDown=createUpDown(1)
+local upDownMovement=createUpDown(0)
+local leftRightMovement=createUpDown(0)
+local scrollUpDown=createUpDown(0)
+local storeX=createMemoryGate()
+local storeY=createMemoryGate()
+local linePulse=createPulse()
 
-local mapMovement="GPS" -- GPS/Touchscreen
+w=0
+h=0
+DrawLineToggle=false
+MapMovement="GPS" -- GPS/Touchscreen
+
+UiR=property.getNumber("UI R")
+UiG=property.getNumber("UI G")
+UiB=property.getNumber("UI B")
+PointerR=property.getNumber("Pointer R")
+PointerG=property.getNumber("Pointer G")
+PointerB=property.getNumber("Pointer B")
+LineR=property.getNumber("Line R")
+LineG=property.getNumber("Line G")
+LineB=property.getNumber("Line B")
+PropertyMultiplierX=property.getNumber("X movement multiplier")
+PropertyMultiplierY=property.getNumber("Y movement multiplier")
+ZoomMultiplier=property.getNumber("Zoom multiplier") -- Zoom of 1 equals to 1km from center to edge of screen.
+SpeedThreshold=property.getNumber("Minimum speed for time estimate (m/s)")
+
+IsOverlayEnabled=property.getBool("Compass overlay")
+PointerType=property.getBool("Pointer") -- off=square on=triangle
+MapMovementSquarePointer=property.getBool("Square pointer during map movement")
+
 function onTick()
-	uiR=property.getNumber("UI R")
-	uiG=property.getNumber("UI G")
-	uiB=property.getNumber("UI B")
-	pointerR=property.getNumber("Pointer R")
-	pointerG=property.getNumber("Pointer G")
-	pointerB=property.getNumber("Pointer B")
-	lineR=property.getNumber("Line R")
-	lineG=property.getNumber("Line G")
-	lineB=property.getNumber("Line B")
-	local propertyMultiplierX=property.getNumber("X movement multiplier")
-	local propertyMultiplierY=property.getNumber("Y movement multiplier")
-	local zoomMultiplier=property.getNumber("Zoom multiplier") -- Zoom of 1 equals to 1km from center to edge of screen.
-	speedThreshold=property.getNumber("Minimum speed for time estimate (m/s)")
-
-	isOverlayEnabled=property.getBool("Compass overlay")
-	pointerType=property.getBool("Pointer") -- off=square on=triangle
-	mapMovementSquarePointer=property.getBool("Square pointer during map movement")
-
-	gpsX=input.getNumber(1)
-	gpsY=input.getNumber(3)
-	speed=input.getNumber(9)
-	local compass=input.getNumber(17)
-	compassDegrees=(-compass*360+360)%360
+	GpsX=input.getNumber(1)
+	GpsY=input.getNumber(3)
+	Speed=input.getNumber(9)
+	CompassDegrees=(-input.getNumber(17)*360+360)%360
 
 	local inputX=input.getNumber(18)
 	local inputY=input.getNumber(19)
-	waypointX=input.getNumber(20)
-	waypointY=input.getNumber(21)
+	WaypointX=input.getNumber(20)
+	WaypointY=input.getNumber(21)
 
 	local isPressed=input.getBool(1)
 
-	verticalGap=clamp((h/32-1),0,2)*2
+	VerticalGap=clamp((h/32-1),0,2)*2
 
-	local Up=isPressed and isPointInRectangle(inputX,inputY,-1,-1,w+1,h/2-1)
-	local Down=isPressed and isPointInRectangle(inputX,inputY,-1,h/2+1,w+1,h/2-1)
+	local up=isPressed and isPointInRectangle(inputX,inputY,-1,-1,w+1,h/2-1)
+	local down=isPressed and isPointInRectangle(inputX,inputY,-1,h/2+1,w+1,h/2-1)
 
 	local dataMode=isPressed and isPointInRectangle(inputX,inputY,w-26,h-8,7,9)
-	dataScreenToggle=dataButtonPushToToggle(dataMode)
+	DataScreenToggle=dataButtonPushToToggle(dataMode)
 
-	if not dataScreenToggle then
-		local Left=isPressed and isPointInRectangle(inputX,inputY,-1,-1,w/2-1,h+1)
-		local Right=isPressed and isPointInRectangle(inputX,inputY,w/2+1,-1,w+1,h+1)
+	if not DataScreenToggle then
+		local left=isPressed and isPointInRectangle(inputX,inputY,-1,-1,w/2-1,h+1)
+		local right=isPressed and isPointInRectangle(inputX,inputY,w/2+1,-1,w+1,h+1)
 
-		zoomDecrease=isPressed and isPointInRectangle(inputX,inputY,w-7,h-8,8,9)
-		zoomIncrease=isPressed and isPointInRectangle(inputX,inputY,w-14,h-8,8,9)
-		zoomTimeMultiplier=zoomTimeMultiplierUpDown(false,zoomDecrease or zoomIncrease,0.1,1,3,not (zoomDecrease or zoomIncrease))
-		zoom=zoomUpDown(zoomIncrease,zoomDecrease,0.03*zoomTimeMultiplier*zoomMultiplier,0.1,50,false)
+		ZoomDecrease=isPressed and isPointInRectangle(inputX,inputY,w-7,h-8,8,9)
+		ZoomIncrease=isPressed and isPointInRectangle(inputX,inputY,w-14,h-8,8,9)
+		local zoomTimeMultiplier=zoomTimeMultiplierUpDown(false,ZoomDecrease or ZoomIncrease,0.1,1,3,not (ZoomDecrease or ZoomIncrease))
+		Zoom=zoomUpDown(ZoomIncrease,ZoomDecrease,0.03*zoomTimeMultiplier*ZoomMultiplier,0.1,50,false)
 
-		resetMovement=isPressed and isPointInRectangle(inputX,inputY,w-20,h-8,7,9)
+		ResetMovement=isPressed and isPointInRectangle(inputX,inputY,w-20,h-8,7,9)
 
 		local drawLine=isPressed and isPointInRectangle(inputX,inputY,w-32,h-8,7,9)
 		local drawLinePulse=false
-		if waypointX==0 and waypointY==0 then
+		if WaypointX==0 and WaypointY==0 then
 			drawLine=false
-			if drawLineToggle then
+			if DrawLineToggle then
 				drawLinePulse=true
 			end
 		end
-		drawLineToggle=drawLinePushToToggle(drawLine or linePulse(drawLinePulse))
+		DrawLineToggle=drawLinePushToToggle(drawLine or linePulse(drawLinePulse))
 
-		local notAnyButton=not (dataMode or resetMovement or drawLine or zoomIncrease or zoomDecrease)
+		local notAnyButton=not (dataMode or ResetMovement or drawLine or ZoomIncrease or ZoomDecrease)
 
-		if (Left or Right or Up or Down) and notAnyButton then
-			mapMovement="Touchscreen"
+		if (left or right or up or down) and notAnyButton then
+			MapMovement="Touchscreen"
 		end
-		if resetMovement then
-			mapMovement="GPS"
+		if ResetMovement then
+			MapMovement="GPS"
 		end
 
-		local movementMultiplierX=math.abs((w/2-inputX)*zoom*propertyMultiplierX)
-		local movementMultiplierY=math.abs((h/2-inputY)*zoom*propertyMultiplierY)
+		local movementMultiplierX=math.abs((w/2-inputX)*Zoom*PropertyMultiplierX)
+		local movementMultiplierY=math.abs((h/2-inputY)*Zoom*PropertyMultiplierY)
 
-		local movementX=leftRightMovement(Left and notAnyButton,Right and notAnyButton,0.5*movementMultiplierX,-128000-gpsX,128000-gpsX,resetMovement)
-		local movementY=upDownMovement(Down and notAnyButton,Up and notAnyButton,0.5*movementMultiplierY,-128000-gpsY,128000-gpsY,resetMovement)
+		local movementX=leftRightMovement(left and notAnyButton,right and notAnyButton,0.5*movementMultiplierX,-128000-GpsX,128000-GpsX,ResetMovement)
+		local movementY=upDownMovement(down and notAnyButton,up and notAnyButton,0.5*movementMultiplierY,-128000-GpsY,128000-GpsY,ResetMovement)
 
-		storedX=storeX(gpsX,mapMovement=="GPS",resetMovement,gpsX)+movementX
-		storedY=storeY(gpsY,mapMovement=="GPS",resetMovement,gpsY)+movementY
+		StoredX=storeX(GpsX,MapMovement=="GPS",ResetMovement,GpsX)+movementX
+		StoredY=storeY(GpsY,MapMovement=="GPS",ResetMovement,GpsY)+movementY
 
-		pointerX,pointerY=map.mapToScreen(storedX,storedY,zoom,w,h,gpsX,gpsY)
-		screenWaypointX,screenWaypointY=map.mapToScreen(storedX,storedY,zoom,w,h,waypointX,waypointY)
+		PointerX,PointerY=map.mapToScreen(StoredX,StoredY,Zoom,w,h,GpsX,GpsY)
+		ScreenWaypointX,ScreenWaypointY=map.mapToScreen(StoredX,StoredY,Zoom,w,h,WaypointX,WaypointY)
 	else
-		distance,estimate=waypointDistance(gpsX,gpsY,waypointX,waypointY,speed)
+		Distance,Estimate=waypointDistance(GpsX,GpsY,WaypointX,WaypointY,Speed)
 		if h<35 then
-			scrollY=scrollUpDown(Down and not dataMode,Up and not dataMode,1,-21,0,waypointX==0 and waypointY==0)
+			ScrollY=scrollUpDown(down and not dataMode,up and not dataMode,1,-21,0,WaypointX==0 and WaypointY==0)
 		else
-			scrollY=0
+			ScrollY=0
 		end
 	end
 end
@@ -285,9 +230,9 @@ function onDraw()
 	screen.setColor(15,15,15)
 	screen.drawClear()
 
-	local waypointSet=not (waypointX==0 and waypointY==0)
+	local waypointSet=not (WaypointX==0 and WaypointY==0)
 
-	if not dataScreenToggle then
+	if not DataScreenToggle then
 		screen.setMapColorOcean(0,0,0,2)
 		screen.setMapColorShallows(0,0,0,40)
 		screen.setMapColorLand(0,0,0,100)
@@ -296,80 +241,82 @@ function onDraw()
 		screen.setMapColorSnow(0,0,0,200)
 		screen.setMapColorRock(0,0,0,60)
 		screen.setMapColorGravel(0,0,0,120)
-		screen.drawMap(storedX,storedY,zoom)
+		screen.drawMap(StoredX,StoredY,Zoom)
 
-		if drawLineToggle then
-			screen.setColor(lineR,lineG,lineB)
-			screen.drawLine(pointerX,pointerY,screenWaypointX,screenWaypointY)
+		if DrawLineToggle then
+			screen.setColor(LineR,LineG,LineB)
+			screen.drawLine(PointerX,PointerY,ScreenWaypointX,ScreenWaypointY)
 		end
 		if waypointSet then
 			screen.setColor(255,127,0)
-			screen.drawRectF(screenWaypointX,screenWaypointY,2,2)
+			screen.drawRectF(ScreenWaypointX,ScreenWaypointY,2,2)
 		end
 
 		screen.setColor(0,0,0)
-		drawCompassOverlay(compassDegrees,1,isOverlayEnabled)
-		if waypointSet then screen.drawText(w-29,h-6,"L") end
+		drawCompassOverlay(CompassDegrees,1,IsOverlayEnabled)
+		if waypointSet then 
+			screen.drawText(w-29,h-6,"L")
+		end
 		screen.drawText(w-17,h-6,"R")
 		screen.drawLine(w-11,h-4,w-6,h-4)
 		screen.drawLine(w-9,h-6,w-9,h-1)
 		screen.drawLine(w-4,h-4,w,h-4)
 
-		screen.setColor(uiR,uiG,uiB)
-		drawCompassOverlay(compassDegrees,0,isOverlayEnabled)
+		screen.setColor(UiR,UiG,UiB)
+		drawCompassOverlay(CompassDegrees,0,IsOverlayEnabled)
 
 
 		if waypointSet then
-			screen.setColor(getHighlightColor(drawLineToggle))
+			screen.setColor(getHighlightColor(DrawLineToggle))
 			screen.drawText(w-30,h-6,"L")
 		end
 
-		screen.setColor(getHighlightColor(resetMovement))
+		screen.setColor(getHighlightColor(ResetMovement))
 		screen.drawText(w-18,h-6,"R")
 
-		screen.setColor(getHighlightColor(zoomIncrease))
+		screen.setColor(getHighlightColor(ZoomIncrease))
 		screen.drawLine(w-12,h-4,w-7,h-4)
 		screen.drawLine(w-10,h-6,w-10,h-1)
 
-		screen.setColor(getHighlightColor(zoomDecrease))
+		screen.setColor(getHighlightColor(ZoomDecrease))
 		screen.drawLine(w-5,h-4,w-1,h-4)
 
-		screen.setColor(pointerR,pointerG,pointerB)
-		if pointerType then
-			drawTrianglePointer(pointerX,pointerY,compassDegrees)
+		screen.setColor(PointerR,PointerG,PointerB)
+		if PointerType then
+			drawTrianglePointer(PointerX,PointerY,CompassDegrees)
 		else
-			if mapMovement=="GPS" then
+			if MapMovement=="GPS" then
 				screen.drawRectF(w/2-1,h/2-1,2,2)
 			else
-				screen.drawRectF(pointerX,pointerY,2,2)
+				screen.drawRectF(PointerX,PointerY,2,2)
 			end
 		end
-		if mapMovement=="Touchscreen" and mapMovementSquarePointer==true then
+		if MapMovement=="Touchscreen" and MapMovementSquarePointer==true then
 			screen.drawRectF(w/2-1,h/2-1,2,2)
 		end
 	else
-		local digitCount=string.len(string.format("%.0f",compassDegrees))
+		local digitCount=string.len(string.format("%.0f",CompassDegrees))
 		screen.setColor(0,0,0)
-		screen.drawTextBox(w/2-17,2+scrollY,35,5,string.format("%.0f",gpsX),0)
-		screen.drawTextBox(w/2-17,9+scrollY+verticalGap,35,5,string.format("%.0f",gpsY),0)
-		screen.drawTextBox(h/2-7,16+scrollY+verticalGap*2,15,5,string.format("%.0f",compassDegrees),0)
-		screen.drawCircle((h/2-7)+round((15-digitCount*5)/2)+(digitCount*5+1),16+scrollY+verticalGap*2,1)-- Formula for textBox center alignment, alignedX=textBoxX+(textBoxWidth-textWidth)/2
+		screen.drawTextBox(w/2-17,2+ScrollY,35,5,string.format("%.0f",GpsX),0)
+		screen.drawTextBox(w/2-17,9+ScrollY+VerticalGap,35,5,string.format("%.0f",GpsY),0)
+		screen.drawTextBox(h/2-7,16+ScrollY+VerticalGap*2,15,5,string.format("%.0f",CompassDegrees),0)
+		screen.drawCircle((h/2-7)+round((15-digitCount*5)/2)+(digitCount*5+1),16+ScrollY+VerticalGap*2,1)-- Formula for textBox center alignment, alignedX=textBoxX+(textBoxWidth-textWidth)/2
 		if waypointSet then
-			screen.drawTextBox(h/2-14,23+scrollY+verticalGap*3,30,5,string.format("%.".. 3-string.len(math.floor(distance)) .."f",distance).."km",0) -- Depending on digit count the number will have more or less decimal places
-			if speed>speedThreshold then
-				screen.drawTextBox(h/2-9,30+scrollY+verticalGap*4,20,5,string.format("%.0f",estimate).."m",0)
+			screen.drawTextBox(h/2-14,23+ScrollY+VerticalGap*3,30,5,string.format("%.".. 3-string.len(math.floor(Distance)) .."f",Distance).."km",0) -- Depending on digit count the number will have more or less decimal places
+			if Speed>SpeedThreshold then
+				screen.drawTextBox(h/2-9,30+ScrollY+VerticalGap*4,20,5,string.format("%.0f",Estimate).."m",0)
 			end
 		end
 
-		screen.setColor(uiR,uiG,uiB)
-		screen.drawTextBox(w/2-18,2+scrollY,35,5,string.format("%.0f",gpsX),0)
-		screen.drawTextBox(w/2-18,9+scrollY+verticalGap,35,5,string.format("%.0f",gpsY),0)
-		screen.drawTextBox(h/2-8,16+scrollY+verticalGap*2,15,5,string.format("%.0f",compassDegrees),0)
-		screen.drawCircle((h/2-8)+round((15-digitCount*5)/2)+(digitCount*5+1),16+scrollY+verticalGap*2,1)
+		screen.setColor(UiR,UiG,UiB)
+		screen.drawTextBox(w/2-18,2+ScrollY,35,5,string.format("%.0f",GpsX),0)
+		screen.drawTextBox(w/2-18,9+ScrollY+VerticalGap,35,5,string.format("%.0f",GpsY),0)
+		screen.drawTextBox(h/2-8,16+ScrollY+VerticalGap*2,15,5,string.format("%.0f",CompassDegrees),0)
+		screen.drawCircle((h/2-8)+round((15-digitCount*5)/2)+(digitCount*5+1),16+ScrollY+VerticalGap*2,1)
 		if waypointSet then
-			screen.drawTextBox(h/2-15,23+scrollY+verticalGap*3,30,5,string.format("%.".. 3-string.len(math.floor(distance)) .."f",distance).."km",0)
-			if speed>speedThreshold then
-				screen.drawTextBox(h/2-10,30+scrollY+verticalGap*4,20,5,string.format("%.0f",estimate).."m",0)
+			screen.drawTextBox(h/2-15,23+ScrollY+VerticalGap*3,30,5,string.format("%.".. 3-string.len(math.floor(Distance)) .."f",Distance).."km",0)
+			if Speed>SpeedThreshold then
+				screen.drawTextBox(h/2-10,30+ScrollY+VerticalGap*4,20,5,string.format("%.0f",Estimate).."m",0)
 			end
 		end
 
@@ -380,6 +327,6 @@ function onDraw()
 	end
 	screen.setColor(0,0,0)
 	screen.drawText(w-23,h-6,"D")
-	screen.setColor(getHighlightColor(dataScreenToggle))
+	screen.setColor(getHighlightColor(DataScreenToggle))
 	screen.drawText(w-24,h-6,"D")
 end
