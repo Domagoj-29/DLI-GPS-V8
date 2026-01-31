@@ -155,7 +155,7 @@ MapMovementSquarePointer=property.getBool("Square pointer during map movement")
 function onTick()
 	GpsX=input.getNumber(1)
 	GpsY=input.getNumber(3)
-	Speed=input.getNumber(9)
+	Speed=input.getNumber(13)
 	CompassDegrees=(-input.getNumber(17)*360+360)%360
 
 	local inputX=input.getNumber(18)
